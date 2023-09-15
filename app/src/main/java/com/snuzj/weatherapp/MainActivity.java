@@ -78,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
         Picasso.setSingletonInstance(built);
 
 
-        // Check location permissions and request them if necessary
+        // Check location permissions and request them
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (checkLocationPermissions()) {
                 // Permissions are granted; now, you can access the last known location
