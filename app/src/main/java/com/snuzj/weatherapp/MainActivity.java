@@ -240,35 +240,29 @@ public class MainActivity extends AppCompatActivity {
             RequestQueue requestQueue = Volley.newRequestQueue(MainActivity.this);
 
             StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                    new Response.Listener<String>() {
-                        @Override
-                        public void onResponse(String response) {
-                            try {
-                                JSONObject jsonObject = new JSONObject(response);
-                                JSONArray jsonArray = jsonObject.getJSONArray("list");
-                                for (int i = 0; i < jsonArray.length(); i++) {
-                                    JSONObject jsonObjectlist = jsonArray.getJSONObject(i);
-                                    String dtTxt = jsonObjectlist.getString("dt_txt"); // Date and time
-                                    String conditionTv = jsonObjectlist.getJSONArray("weather").getJSONObject(0).getString("main"); // Weather condition
-                                    String icon = jsonObjectlist.getJSONArray("weather").getJSONObject(0).getString("icon"); // Weather icon
-                                    String temperature = jsonObjectlist.getJSONObject("main").getString("temp_max");// Max temperature (in this case)
+                    response -> {
+                        try {
+                            JSONObject jsonObject = new JSONObject(response);
+                            JSONArray jsonArray = jsonObject.getJSONArray("list");
+                            for (int i = 0; i < jsonArray.length(); i++) {
+                                JSONObject jsonObjectlist = jsonArray.getJSONObject(i);
+                                String dtTxt = jsonObjectlist.getString("dt_txt"); // Date and time
+                                String conditionTv = jsonObjectlist.getJSONArray("weather").getJSONObject(0).getString("main"); // Weather condition
+                                String icon = jsonObjectlist.getJSONArray("weather").getJSONObject(0).getString("icon"); // Weather icon
+                                String temperature = jsonObjectlist.getJSONObject("main").getString("temp_max");// Max temperature (in this case)
 
-                                    futureRVModelArrayList.add(new FutureRVModel(dtTxt, conditionTv, icon, temperature));
-                                }
-                                futureRVAdapter.notifyDataSetChanged();
-
-                            } catch (JSONException e) {
-                                e.printStackTrace();
+                                futureRVModelArrayList.add(new FutureRVModel(dtTxt, conditionTv, icon, temperature));
                             }
+                            futureRVAdapter.notifyDataSetChanged();
 
+                        } catch (JSONException e) {
+                            e.printStackTrace();
                         }
+
                     },
-                    new Response.ErrorListener() {
-                        @Override
-                        public void onErrorResponse(VolleyError error) {
-                            Log.e(TAG, "Error fetching future weather data", error);
-                            Toast.makeText(MainActivity.this, "Có lỗi xảy ra khi tải dữ liệu thời tiết trong tương lai", Toast.LENGTH_SHORT).show();
-                        }
+                    error -> {
+                        Log.e(TAG, "Error fetching future weather data", error);
+                        Toast.makeText(MainActivity.this, "Có lỗi xảy ra khi tải dữ liệu thời tiết trong tương lai", Toast.LENGTH_SHORT).show();
                     });
 
             requestQueue.add(stringRequest);
