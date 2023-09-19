@@ -6,7 +6,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Address;
@@ -28,6 +27,7 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.snuzj.weatherapp.databinding.ActivityMainBinding;
 import com.squareup.picasso.OkHttp3Downloader;
@@ -46,16 +46,14 @@ public class MainActivity extends AppCompatActivity {
 
     ActivityMainBinding binding;
     ArrayList<WeatherRVModel> weatherRVModelArrayList;
+    ArrayList<FutureRVModel> futureRVModelArrayList;
+    FutureRVAdapter futureRVAdapter;
     WeatherRVAdapter weatherRVAdapter;
     LocationManager locationManager;
-
     private String TAG = "WEATHER";
-
     private int PERMISSION_CODE = 1;
-
     private String cityName;
 
-    @SuppressLint("ServiceCast")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,18 +63,23 @@ public class MainActivity extends AppCompatActivity {
         // Set flags for fullscreen
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
 
+        // Initialize weatherRV
         weatherRVModelArrayList = new ArrayList<>();
         weatherRVAdapter = new WeatherRVAdapter(this, weatherRVModelArrayList);
         binding.weatherRv.setAdapter(weatherRVAdapter);
 
+        // Initialize futureRV
+        futureRVModelArrayList = new ArrayList<>();
+        futureRVAdapter = new FutureRVAdapter(this, futureRVModelArrayList);
+        binding.futureRv.setAdapter(futureRVAdapter);
+
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
-        //init picasso
+        // Initialize Picasso with OkHttp3Downloader
         Picasso.Builder builder = new Picasso.Builder(this);
         builder.downloader(new OkHttp3Downloader(this, Integer.MAX_VALUE));
         Picasso built = builder.build();
         Picasso.setSingletonInstance(built);
-
 
         // Check location permissions and request them
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -96,9 +99,11 @@ public class MainActivity extends AppCompatActivity {
                 if (location != null) {
                     cityName = getCityName(location.getLongitude(), location.getLatitude());
                     getWeatherInfo(cityName);
+                    getFutureWeatherInfo(cityName);
                 } else {
-                    // Handle the case when last known location is not available
+                    // Handle the case when the last known location is not available
                     getWeatherInfo("Hanoi");
+                    getFutureWeatherInfo("Hanoi");
                 }
             }
         }
@@ -109,8 +114,9 @@ public class MainActivity extends AppCompatActivity {
             if (city.isEmpty()) {
                 Toast.makeText(this, "Hãy nhập tên thành phố (liền không dấu)", Toast.LENGTH_SHORT).show();
             } else {
-                binding.cityNameTv.setText(cityName);
+                binding.cityNameTv.setText(city);
                 getWeatherInfo(city);
+                getFutureWeatherInfo(city);
             }
         });
     }
@@ -168,7 +174,8 @@ public class MainActivity extends AppCompatActivity {
         binding.cityNameTv.setText(cityName);
         RequestQueue requestQueue = Volley.newRequestQueue(MainActivity.this);
 
-        @SuppressLint({"SetTextI18n", "NotifyDataSetChanged"}) JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null, response -> {
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null, response -> {
             binding.loadingPb.setVisibility(View.GONE);
             binding.idRLHome.setVisibility(View.VISIBLE);
             weatherRVModelArrayList.clear();
@@ -206,6 +213,7 @@ public class MainActivity extends AppCompatActivity {
                     String wind = hourObj.getString("wind_kph");
                     weatherRVModelArrayList.add(new WeatherRVModel(time, temper, img, wind));
                 }
+
                 weatherRVAdapter.notifyDataSetChanged();
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -221,6 +229,55 @@ public class MainActivity extends AppCompatActivity {
 
         requestQueue.add(jsonObjectRequest);
     }
+
+    public void getFutureWeatherInfo(String cityName) {
+        // Check if the cityName is valid
+        if (cityName != null && !cityName.isEmpty()) {
+            // Make sure to use "https://" in the URL for secure connection
+            String url = "https://api.openweathermap.org/data/2.5/forecast?q=" + cityName + "&units=metric&appid=339373e7749e0956ea719ed2f4f6ca50";
+
+            binding.cityNameTv.setText(cityName);
+            RequestQueue requestQueue = Volley.newRequestQueue(MainActivity.this);
+
+            StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+                    new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+                            try {
+                                JSONObject jsonObject = new JSONObject(response);
+                                JSONArray jsonArray = jsonObject.getJSONArray("list");
+                                for (int i = 0; i < jsonArray.length(); i++) {
+                                    JSONObject jsonObjectlist = jsonArray.getJSONObject(i);
+                                    String dtTxt = jsonObjectlist.getString("dt_txt"); // Date and time
+                                    String conditionTv = jsonObjectlist.getJSONArray("weather").getJSONObject(0).getString("main"); // Weather condition
+                                    String icon = jsonObjectlist.getJSONArray("weather").getJSONObject(0).getString("icon"); // Weather icon
+                                    String temperature = jsonObjectlist.getJSONObject("main").getString("temp_max");// Max temperature (in this case)
+
+                                    futureRVModelArrayList.add(new FutureRVModel(dtTxt, conditionTv, icon, temperature));
+                                }
+                                futureRVAdapter.notifyDataSetChanged();
+
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+
+                        }
+                    },
+                    new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            Log.e(TAG, "Error fetching future weather data", error);
+                            Toast.makeText(MainActivity.this, "Có lỗi xảy ra khi tải dữ liệu thời tiết trong tương lai", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+
+            requestQueue.add(stringRequest);
+        } else {
+            // Handle the case where cityName is null or empty (e.g., show an error message)
+            Toast.makeText(MainActivity.this, "Invalid city name", Toast.LENGTH_SHORT).show();
+        }
+    }
+
 
     public boolean isInternetAvailable() {
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);

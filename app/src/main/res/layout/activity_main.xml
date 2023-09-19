@@ -34,7 +34,7 @@
             android:textAlignment="center"
             android:gravity="center"
             android:textColor="@color/white"
-            android:layout_marginTop="38dp"
+            android:layout_marginTop="10dp"
             android:padding="20dp"
             android:textSize="18sp" />
 
@@ -75,10 +75,9 @@
                 android:layout_weight="0.5"
                 android:layout_margin="10dp"
                 android:background="@android:color/transparent"
-                android:src="@drawable/ic_search"
-                />
-
+                android:src="@drawable/ic_search" />
         </LinearLayout>
+
 
         <TextView
             android:layout_width="match_parent"
@@ -102,15 +101,18 @@
             android:src="@drawable/icon" />
 
         <TextView
+            android:id="@+id/conditionTv"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/conditionTv"
-            android:gravity="center"
             android:layout_below="@id/iconIv"
-            android:textAlignment="center"
-            android:textColor="@color/white"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="10dp"
+            android:gravity="center"
             android:text="Condition"
-            android:layout_margin="10dp" />
+            android:textAlignment="center"
+            android:textColor="@color/white" />
 
         <TextView
             android:id="@+id/todayWeatherTv"
@@ -131,6 +133,26 @@
             android:orientation="horizontal"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             tools:listitem="@layout/weather_rv_item"/>
+
+        <TextView
+            android:id="@+id/futureWeatherTv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:layout_marginBottom="10dp"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:text="Thời tiết 5 ngày tới"
+            android:layout_above="@id/futureRv"/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/futureRv"
+            android:layout_above="@id/todayWeatherTv"
+            android:orientation="horizontal"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            tools:listitem="@layout/future_weather_item"/>
 
 
 

@@ -6,6 +6,11 @@ public class WeatherRVModel {
     private String icon;
     private String windSpeed;
 
+    public void setWindSpeed(String windSpeed) {
+        this.windSpeed = windSpeed;
+    }
+
+
     public WeatherRVModel(String time, String temperature, String icon, String windSpeed) {
         this.time = time;
         this.temperature = temperature;
